@@ -13,7 +13,7 @@
 
 namespace leveldb {
 
-class InternalKeyComparator; ///前置声明.h声明里可以使用指针和引用。在.cpp里面需include真正的InternalKeyComparator.h文件进来。
+class InternalKeyComparator; ///前置声明.h声明里可以使用指针和（引用参数等）。在.cpp里面需include真正的InternalKeyComparator.h文件进来。
 class MemTableIterator;
 
 class MemTable {
