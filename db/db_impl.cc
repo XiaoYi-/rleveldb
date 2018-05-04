@@ -40,14 +40,14 @@ namespace leveldb {
 const int kNumNonTableCacheFiles = 10;
 
 // Information kept for every waiting writer
-struct DBImpl::Writer {
+struct DBImpl::Writer { ///被写入的结构体
   Status status;
   WriteBatch* batch;
   bool sync;
   bool done;
-  port::CondVar cv;
+  port::CondVar cv; ///貌似一个条件变量
 
-  explicit Writer(port::Mutex* mu) : cv(mu) { }
+  explicit Writer(port::Mutex* mu) : cv(mu) { } ///explicit 就抑制了隐式转换
 };
 
 struct DBImpl::CompactionState {
@@ -1199,9 +1199,9 @@ Status DBImpl::Put(const WriteOptions& o, const Slice& key, const Slice& val) {
 Status DBImpl::Delete(const WriteOptions& options, const Slice& key) {
   return DB::Delete(options, key);
 }
-
+///这个接口可能有多个线程在调
 Status DBImpl::Write(const WriteOptions& options, WriteBatch* my_batch) {
-  Writer w(&mutex_);
+  Writer w(&mutex_); ///DBImpl中定义的那个struct
   w.batch = my_batch;
   w.sync = options.sync;
   w.done = false;
@@ -1209,7 +1209,7 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* my_batch) {
   MutexLock l(&mutex_);
   writers_.push_back(&w);
   while (!w.done && &w != writers_.front()) {
-    w.cv.Wait();
+    w.cv.Wait(); ///释放锁然后等待唤醒
   }
   if (w.done) {
     return w.status;
@@ -1217,10 +1217,10 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* my_batch) {
 
   // May temporarily unlock and wait.
   Status status = MakeRoomForWrite(my_batch == nullptr);
-  uint64_t last_sequence = versions_->LastSequence();
+  uint64_t last_sequence = versions_->LastSequence(); ///last_sequence记录的是leveldb中已经写入的数据的最大序列号
   Writer* last_writer = &w;
   if (status.ok() && my_batch != nullptr) {  // nullptr batch is for compactions
-    WriteBatch* updates = BuildBatchGroup(&last_writer);
+    WriteBatch* updates = BuildBatchGroup(&last_writer); ///将所有任务中的writebatch，组合在一起形成一个包含所有writebatch的K-V的大的writebatch——updates
     WriteBatchInternal::SetSequence(updates, last_sequence + 1);
     last_sequence += WriteBatchInternal::Count(updates);
 
@@ -1239,7 +1239,12 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* my_batch) {
         }
       }
       if (status.ok()) {
-        status = WriteBatchInternal::InsertInto(updates, mem_);
+        /*
+          这里就是向内存中的MemTable添加数据了。这个函数把updates里面的所有K-V添加到Memtable中，
+          当然，sequence number也会融合在key里面，回顾之前的博文就可以清楚了。这个地方是不加锁的，
+          因此虽然InsertInto可能会执行较长时间，但是它也不会影响其他生产者线程向队列中添加任务
+        */
+        status = WriteBatchInternal::InsertInto(updates, mem_); ///写入DB持有的mem_内存块中，完成了写入任务。
       }
       mutex_.Lock();
       if (sync_error) {
@@ -1254,7 +1259,7 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* my_batch) {
     versions_->SetLastSequence(last_sequence);
   }
 
-  while (true) {
+  while (true) { ///删除已经被处理的任务
     Writer* ready = writers_.front();
     writers_.pop_front();
     if (ready != &w) {

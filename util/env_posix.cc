@@ -748,7 +748,7 @@ void EnvPosixTestHelper::SetReadOnlyMMapLimit(int limit) {
 }
 
 Env* Env::Default() {
-  pthread_once(&once, InitDefaultEnv);
+  pthread_once(&once, InitDefaultEnv); ///保证InitDefaultEnv接口只执行一次
   return default_env;
 }
 

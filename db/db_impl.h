@@ -67,7 +67,7 @@ class DBImpl : public DB {
  private:
   friend class DB;
   struct CompactionState;
-  struct Writer;
+  struct Writer; ///向前声明，在.cc中具体实现。
 
   Iterator* NewInternalIterator(const ReadOptions&,
                                 SequenceNumber* latest_snapshot,
@@ -120,7 +120,7 @@ class DBImpl : public DB {
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
   // Constant after construction
-  Env* const env_;
+  Env* const env_; ///各个平台继承实现接口，屏蔽各个平台系统操作差异。
   const InternalKeyComparator internal_comparator_;
   const InternalFilterPolicy internal_filter_policy_;
   const Options options_;  // options_.comparator == &internal_comparator_

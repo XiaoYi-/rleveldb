@@ -202,7 +202,7 @@ struct LEVELDB_EXPORT WriteOptions {
   // system call followed by "fsync()".
   //
   // Default: false
-  bool sync;
+  bool sync; ///是否同步写，操作系统有缓存机制。
 
   WriteOptions()
       : sync(false) {

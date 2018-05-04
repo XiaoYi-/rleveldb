@@ -21,7 +21,7 @@
 #endif  // !defined(THREAD_ANNOTATION_ATTRIBUTE__)
 
 #ifndef GUARDED_BY
-#define GUARDED_BY(x) THREAD_ANNOTATION_ATTRIBUTE__(guarded_by(x))
+#define GUARDED_BY(x) THREAD_ANNOTATION_ATTRIBUTE__(guarded_by(x)) // GUARDED_BY表示变量被锁x保护
 #endif
 
 #ifndef PT_GUARDED_BY

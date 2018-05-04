@@ -11,7 +11,7 @@
 #if defined(_WIN32)
 
 #if defined(LEVELDB_COMPILE_LIBRARY)
-#define LEVELDB_EXPORT __declspec(dllexport)
+#define LEVELDB_EXPORT __declspec(dllexport) ///将一个函数声名为导出函数，就是说这个函数要被其他程序调用，即作为DLL的一个对外函数接口。
 #else
 #define LEVELDB_EXPORT __declspec(dllimport)
 #endif  // defined(LEVELDB_COMPILE_LIBRARY)
